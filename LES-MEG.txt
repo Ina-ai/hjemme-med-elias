@@ -1,0 +1,11 @@
+HJEMME MED ELIAS
+
+Denne mappen er en webapp. Publiser alle filene samlet på en HTTPS-adresse (for eksempel GitHub Pages).
+
+På iPhone: Åpne adressen i Safari > Del > Legg til på Hjem-skjerm.
+
+Data lagres lokalt i Safari på denne telefonen. Ta sikkerhetskopi fra Elias-menyen. Ikke slett nettstedsdata uten kopi.
+
+De illustrerte tallene på bakgrunnsbildet er dekorative og endres ikke; de virkelige tallene vises i panelene.
+
+Dette er en testversjon, ikke publisert på nettet.
