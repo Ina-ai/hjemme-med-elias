@@ -1,6 +1,42 @@
 <!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#32294f"><title>Hjemme med Elias</title><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon.png"><style>
 *{box-sizing:border-box}body{margin:0;background:#292342;color:#34294f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.stage{position:relative;width:min(100vw,500px);margin:auto;aspect-ratio:853/1844;background-image:url('eventyrhus.png');background-size:100% 100%;box-shadow:0 0 40px #151126}.hot{position:absolute;background:transparent;border:0;cursor:pointer;touch-action:manipulation}.hot:focus-visible{outline:3px solid #fff;border-radius:15px}.shade{position:fixed;inset:0;background:#171329a8;z-index:10;display:none;align-items:flex-end;justify-content:center}.shade.show{display:flex}.sheet{background:linear-gradient(150deg,#fff6eb,#eee4ff);border:2px solid #fff7ed;border-radius:25px 25px 0 0;width:min(100%,520px);max-height:85dvh;overflow:auto;padding:18px 20px max(24px,env(safe-area-inset-bottom));box-shadow:0 -8px 30px #17132966}.sheethead{display:flex;justify-content:space-between;align-items:center;gap:10px}.sheet h2{font-size:22px;margin:5px 0 12px}.sheet h3{font-size:16px;margin:18px 0 8px}.close{border:0;background:#e6d7f5;color:#49386e;border-radius:100px;width:38px;height:38px;font-size:23px}.task{display:flex;gap:10px;align-items:center;border-bottom:1px solid #d9cfe0;padding:11px 0}.task input{accent-color:#59ae91;width:23px;height:23px;flex-shrink:0}.task label{flex:1;line-height:1.35}.task.done label{text-decoration:line-through;opacity:.6}.del{border:0;background:transparent;color:#776b89;font-size:20px;padding:4px}.btn{border:0;border-radius:13px;background:#6a61b0;color:white;padding:12px 15px;font-weight:700;font-size:15px}.btn.secondary{background:#e3d7f2;color:#493b6b}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.actions>*{flex:1}.field{width:100%;padding:12px;border-radius:12px;border:1px solid #cdbdd8;background:white;font-size:16px}.fieldarea{min-height:110px;font-size:13px}p{line-height:1.45}.muted{color:#716780;font-size:13px}.meter{height:13px;border-radius:20px;background:#dcd2e4;overflow:hidden;margin:12px 0}.fill{height:100%;background:linear-gradient(90deg,#66c8a0,#8c84df)}.room{display:flex;align-items:center;justify-content:space-between;width:100%;background:#fff9f3;border:1px solid #e7d9e6;color:#40315d;padding:13px;margin:7px 0;border-radius:14px;text-align:left;font-size:15px}.room b{font-size:13px;color:#766791}.hint{font-size:12px;color:#625679;background:#fff9f1;padding:9px;border-radius:10px}.chip{display:inline-block;background:#e9dff6;padding:7px 11px;border-radius:100px;margin:4px;font-size:13px}.toast{position:fixed;bottom:15px;left:10%;right:10%;background:#2f2853;color:white;padding:12px;border-radius:12px;text-align:center;z-index:20;display:none}
-</style></head><body><div class="stage" aria-label="Illustrert eventyrhus med navigasjon">
+</style>
+
+<style>
+.dato-visning {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: #fff4e9;
+  color: #59365e;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  white-space: nowrap;
+  box-shadow: 0 3px 12px #0003;
+}
+</style>
+
+</head><body>
+<div class="dato-visning" id="dagensDato"></div>
+<script>
+function oppdaterDato() {
+  const dato = new Date();
+  document.getElementById('dagensDato').textContent =
+    dato.toLocaleDateString('nb-NO', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Europe/Oslo'
+    });
+}
+oppdaterDato();
+setInterval(oppdaterDato, 60000);
+</script>
+<div class="stage" aria-label="Illustrert eventyrhus med navigasjon">
 <button class="hot" style="left:2%;top:20%;width:49%;height:18%" aria-label="I dag" onclick="openSheet('today')"></button>
 <button class="hot" style="left:52%;top:20%;width:46%;height:10%" aria-label="Denne uken" onclick="openSheet('week')"></button>
 <button class="hot" style="left:10%;top:41%;width:39%;height:9%" aria-label="Hele huset" onclick="openSheet('house')"></button>
