@@ -29,7 +29,14 @@
 .week-card small{font-size:2.65cqw;line-height:1.2;color:#674b78}
 .week-bar{height:1.2cqw;border-radius:20px;background:rgba(127,98,151,.2);overflow:hidden}
 .week-bar span{display:block;height:100%;background:#8e85d8}
-.task label .schedule{display:block;font-size:.76em;font-weight:400;opacity:.7;margin-top:4px}.task label span{display:block}</style></head><body><div class="stage" aria-label="Illustrert eventyrhus med navigasjon"><div class="scenery-repair left" aria-hidden="true"></div><div class="scenery-repair right" aria-hidden="true"></div><section class="today-card" aria-label="Dagens oppgaver"><div class="today-head"><div><div class="today-title">☀️ I dag</div><div class="today-date" id="today-date"></div></div><div><div class="today-count" id="today-count"></div><div class="today-progress"><span id="today-progress"></span></div></div></div><div class="today-items" id="today-items"></div><button class="today-more" onclick="openSheet('today')">Se flere oppgaver ›</button></section><button class="week-card" onclick="openSheet('week')" aria-label="Åpne ukens oppgaver"><strong>📅 Denne uken ›</strong><small id="week-count"></small><div class="week-bar"><span id="week-progress"></span></div></button>
+.task label .schedule{display:block;font-size:.76em;font-weight:400;opacity:.7;margin-top:4px}.task label span{display:block}
+/* Live fremdrift erstatter tallet som var malt inn i bakgrunnsbildet. */
+.declutter-card{position:absolute;z-index:4;left:3.7%;top:72.55%;width:42.5%;height:7.7%;border:1px solid #e6d5df;border-radius:5cqw;background:linear-gradient(135deg,#fff7f1,#f1e2f3);box-shadow:0 3px 10px #3a224833;display:flex;flex-direction:column;justify-content:center;align-items:stretch;text-align:left;gap:1.2cqw;padding:2.3cqw 2.6cqw;color:#39254e;cursor:pointer;font-family:'Trebuchet MS',ui-rounded,sans-serif;}
+.declutter-title{font-weight:700;font-size:2.9cqw;white-space:nowrap;}
+.declutter-sub{font-size:2.5cqw;}
+.declutter-track{height:2.6cqw;border-radius:10cqw;background:#d9cbd8;overflow:hidden;}
+.declutter-track span{display:block;height:100%;width:0;background:#5ac69b;border-radius:10cqw;}
+</style></head><body><div class="stage" aria-label="Illustrert eventyrhus med navigasjon"><div class="scenery-repair left" aria-hidden="true"></div><div class="scenery-repair right" aria-hidden="true"></div><section class="today-card" aria-label="Dagens oppgaver"><div class="today-head"><div><div class="today-title">☀️ I dag</div><div class="today-date" id="today-date"></div></div><div><div class="today-count" id="today-count"></div><div class="today-progress"><span id="today-progress"></span></div></div></div><div class="today-items" id="today-items"></div><button class="today-more" onclick="openSheet('today')">Se flere oppgaver ›</button></section><button class="week-card" onclick="openSheet('week')" aria-label="Åpne ukens oppgaver"><strong>📅 Denne uken ›</strong><small id="week-count"></small><div class="week-bar"><span id="week-progress"></span></div></button>
 
 
 <button class="hot" style="left:10%;top:41%;width:39%;height:9%" aria-label="Hele huset" onclick="openSheet('house')"></button>
@@ -38,7 +45,7 @@
 <button class="hot" style="left:61%;top:58%;width:38%;height:7%" aria-label="Soverom" onclick="openSheet('bedrooms')"></button>
 <button class="hot" style="left:61%;top:68%;width:38%;height:6%" aria-label="Vaskerom" onclick="openRoom('Vaskerom')"></button>
 <button class="hot" style="left:61%;top:74%;width:38%;height:6%" aria-label="Gang og bod" onclick="openSheet('hall')"></button>
-<button class="hot" style="left:2%;top:72%;width:48%;height:10%" aria-label="Declutter prosjektet" onclick="openSheet('declutter')"></button>
+<button class="declutter-card" aria-label="Åpne ryddeprosjektet" onclick="openSheet('declutter')"><span class="declutter-title">✧ Declutter-prosjektet ›</span><span class="declutter-sub" id="declutter-count">0 av 0 oppgaver</span><span class="declutter-track"><span id="declutter-progress"></span></span></button>
 <button class="hot" style="left:0%;top:88%;width:21%;height:12%" aria-label="Oversikt" onclick="openSheet('overview')"></button>
 <button class="hot" style="left:21%;top:88%;width:19%;height:12%" aria-label="Uken" onclick="openSheet('week')"></button>
 <button class="hot" style="left:40%;top:88%;width:20%;height:12%" aria-label="Huset" onclick="openSheet('house')"></button>
@@ -99,7 +106,7 @@ function addTask(kind,room){let el=document.getElementById('newtask'),title=el.v
 function addForm(kind,room){return `<h3>Legg til oppgave</h3><input class="field" id="newtask" placeholder="En liten, konkret oppgave"><div class="actions"><button class="btn" onclick="addTask('${kind}',${room?`'${room}'`:'null'})">Legg til</button></div>`}
 function roomList(arr){return arr.map(r=>{let a=state.tasks.filter(t=>t.kind==='room'&&t.room===r);return `<button class="room" onclick="openRoom('${r}')">${esc(r)} <b>${a.filter(t=>t.done).length}/${a.length} ›</b></button>`}).join('')}
 function currentCustom(){return state.customWeek.filter(t=>t.week===weekKey())}
-function todayRoutines(){return activeRoutines().filter(r=>routineApplicableToday(r)||routineDue(r)&&!routineDone(r)).sort((a,b)=>Number(routineApplicableToday(b))-Number(routineApplicableToday(a)))}
+function todayRoutines(){return activeRoutines().filter(r=>routineApplicableToday(r))}
 function renderHome(){
  let date=document.getElementById('today-date');if(!date)return;
  date.textContent=todayLabel();
@@ -107,12 +114,15 @@ function renderHome(){
  document.getElementById('today-count').textContent=done+' av '+visible.length;
  document.getElementById('today-progress').style.width=(visible.length?100*done/visible.length:0)+'%';
  document.getElementById('today-items').innerHTML=visible.map(r=>`<label class="today-item ${routineDone(r)?'done':''}"><input type="checkbox" ${routineDone(r)?'checked':''} onchange="toggleRoutine('${r.id}',this.checked)"><span title="${esc(r.title)}">${esc(r.title)}</span></label>`).join('')||'<small>Alt er gjort for i dag ✨</small>';
+ let roomTasks=state.tasks.filter(t=>t.kind==='room'),finished=roomTasks.filter(t=>t.done).length;
+ document.getElementById('declutter-count').textContent=finished+' av '+roomTasks.length+' oppgaver';
+ document.getElementById('declutter-progress').style.width=(roomTasks.length?100*finished/roomTasks.length:0)+'%';
  let w=activeRoutines(),n=w.filter(r=>routineDone(r)).length;
  document.getElementById('week-count').textContent=n+' av '+w.length+' rutiner';
  document.getElementById('week-progress').style.width=(w.length?100*n/w.length:0)+'%';
 }
 function render(){let r=state.tasks.filter(t=>t.kind==='room'),a=activeRoutines(),custom=currentCustom(),body='';switch(current){
- case 'today':body='<p class="muted">'+esc(todayLabel())+'</p><p class="muted">Dagens rutiner og det som gjenstår fra tidligere i uken.</p>'+ (todayRoutines().length?todayRoutines().map(routineHtml).join(''):'<p class="muted">Alle rutinene er gjort for i dag! ✨</p>')+'<button class="btn secondary" onclick="openSheet(&quot;week&quot;)">Se hele uken</button>';break;
+ case 'today':body='<p class="muted">'+esc(todayLabel())+'</p><p class="muted">Bare dagens rutiner. Hele ukens oppgaver finner du under «Denne uken».</p>'+ (todayRoutines().length?todayRoutines().map(routineHtml).join(''):'<p class="muted">Alle rutinene er gjort for i dag! ✨</p>')+'<button class="btn secondary" onclick="openSheet(&quot;week&quot;)">Se hele uken</button>';break;
  case 'week':body='<p class="muted">Faste rutiner kommer tilbake automatisk. Helg betyr fredag, lørdag eller søndag.</p>'+routineMeter(a)+a.map(routineHtml).join('')+'<h3>Andre oppgaver denne uken</h3>'+tasks(custom)+addForm('week',null);break;
  case 'house':body='<p class="muted">Velg rommet du vil rydde når du har tid.</p>'+roomList(rooms);break;
  case 'bedrooms':body=roomList(['Foreldrenes soverom','Adrians rom','Emilies rom']);break;
