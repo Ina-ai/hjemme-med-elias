@@ -1,11 +1,5 @@
-HJEMME MED ELIAS
+Hjemme med Elias – oppdatering av forsiden
 
-Denne mappen er en webapp. Publiser alle filene samlet på en HTTPS-adresse (for eksempel GitHub Pages).
+Last opp index.html på GitHub. sw.js er valgfri, men anbefales for å oppdatere hurtigbufferen. Eventyrhusbildet og øvrige filer skal ikke endres.
 
-På iPhone: Åpne adressen i Safari > Del > Legg til på Hjem-skjerm.
-
-Data lagres lokalt i Safari på denne telefonen. Ta sikkerhetskopi fra Elias-menyen. Ikke slett nettstedsdata uten kopi.
-
-De illustrerte tallene på bakgrunnsbildet er dekorative og endres ikke; de virkelige tallene vises i panelene.
-
-Dette er en testversjon, ikke publisert på nettet.
+Panelene har gjennomsiktige flater. For å dekke over de hvite feltene som er tegnet i originalillustrasjonen, bruker appen en myk himmeltekstur hentet fra en annen del av det samme bildet. Den opprinnelige illustrasjonen endres ikke.
