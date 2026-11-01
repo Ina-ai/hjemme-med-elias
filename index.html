@@ -45,6 +45,26 @@
 
 
 .declutter-card{background:linear-gradient(135deg,rgba(255,247,241,.87),rgba(241,226,243,.86));backdrop-filter:blur(11px);-webkit-backdrop-filter:blur(11px);border-color:rgba(255,246,239,.86);}
+
+/* Finjustering: håndtegnet skilt, varmere og mer transparent fremdrift. */
+.declutter-card{
+ background:linear-gradient(145deg,rgba(255,231,204,.74),rgba(248,220,210,.71));
+ border:1.2px solid rgba(255,244,220,.80);
+ box-shadow:0 2px 8px rgba(52,29,65,.15),inset 0 1px rgba(255,255,255,.42);
+ backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.declutter-track{background:rgba(110,84,112,.21)}
+/* Original vaskemaskin og pil forblir synlige. Teksten er et live tekstlag. */
+.downstairs-hot{overflow:visible}
+.downstairs-hot::after{
+ content:'Øvrige rom nede';position:absolute;left:27%;right:12%;top:18%;bottom:17%;
+ display:flex;align-items:center;justify-content:center;
+ background:linear-gradient(90deg,rgba(255,227,210,.97),rgba(255,230,216,.98),rgba(255,226,208,.97));
+ border-radius:1.6cqw;
+ color:#2c2048;font-family:'Trebuchet MS',ui-rounded,'Arial Rounded MT Bold',sans-serif;
+ font-size:2.65cqw;font-weight:700;letter-spacing:-.045em;white-space:nowrap;
+ line-height:1;text-shadow:0 .12cqw rgba(92,54,80,.13);pointer-events:none;
+}
 </style></head><body><div class="stage" aria-label="Illustrert eventyrhus med navigasjon"><div class="scenery-repair left" aria-hidden="true"></div><div class="scenery-repair right" aria-hidden="true"></div><section class="today-card" aria-label="Dagens oppgaver"><div class="today-head"><div><div class="today-title">☀️ I dag</div><div class="today-date" id="today-date"></div></div><div><div class="today-count" id="today-count"></div><div class="today-progress"><span id="today-progress"></span></div></div></div><div class="today-items" id="today-items"></div><button class="today-more" onclick="openSheet('today')">Se flere oppgaver ›</button></section><button class="week-card" onclick="openSheet('week')" aria-label="Åpne ukens oppgaver"><strong>📅 Denne uken ›</strong><small id="week-count"></small><div class="week-bar"><span id="week-progress"></span></div></button>
 
 
@@ -53,7 +73,7 @@
 <button class="hot" style="left:61%;top:47%;width:38%;height:7%" aria-label="Stue og kjøkken" onclick="openSheet('living')"></button>
 <button class="hot" style="left:61%;top:58%;width:38%;height:7%" aria-label="Soverom" onclick="openSheet('bedrooms')"></button>
 
-<button class="hot" style="left:63%;top:70.6%;width:34%;height:3.6%;z-index:6" aria-label="Øvrige rom nede" onclick="openSheet('hall')"></button>
+<button class="hot downstairs-hot" style="left:63%;top:70.6%;width:34%;height:3.6%;z-index:6" aria-label="Øvrige rom nede" onclick="openSheet('hall')"></button>
 <button class="declutter-card" aria-label="Åpne ryddeprosjektet" onclick="openSheet('declutter')"><span class="declutter-title">✧ Declutter-prosjektet ›</span><span class="declutter-sub" id="declutter-count">0 av 0 oppgaver</span><span class="declutter-track"><span id="declutter-progress"></span></span></button>
 <button class="hot" style="left:0%;top:88%;width:21%;height:12%" aria-label="Oversikt" onclick="openSheet('overview')"></button>
 <button class="hot" style="left:21%;top:88%;width:19%;height:12%" aria-label="Uken" onclick="openSheet('week')"></button>
