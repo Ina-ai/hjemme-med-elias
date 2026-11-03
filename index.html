@@ -55,6 +55,10 @@
 }
 .declutter-track{background:rgba(110,84,112,.21)}
 /* Tekst, vaskemaskin og pil er malt inn i originalillustrasjonen. Ingen overliggende tekst. */
+
+/* Lister: egen liten snarvei uten endring av illustrasjonen */
+.list-shortcut{position:absolute;z-index:8;right:3%;top:84%;border:2px solid #fff5e5;border-radius:25px;background:#fff0ddeb;color:#35234c;font-weight:700;font-size:15px;padding:9px 15px;box-shadow:0 3px 10px #21162c55;cursor:pointer}
+.list-entry{display:flex;gap:7px;align-items:center;margin:8px 0}.list-entry input[type=checkbox]{width:23px;height:23px;accent-color:#6cbf96;flex-shrink:0}.list-entry .item-label{flex:1;overflow-wrap:anywhere}.list-entry.checked .item-label{text-decoration:line-through;opacity:.52}.list-entry button{background:transparent;border:0;font-size:21px;color:#75617d;padding:5px}.list-input{margin-top:10px}.list-hint{font-size:12px;color:#766887;margin:7px 0 12px}
 </style></head><body><div class="stage" aria-label="Illustrert eventyrhus med navigasjon"><div class="scenery-repair left" aria-hidden="true"></div><div class="scenery-repair right" aria-hidden="true"></div><section class="today-card" aria-label="Dagens oppgaver"><div class="today-head"><div><div class="today-title">☀️ I dag</div><div class="today-date" id="today-date"></div></div><div><div class="today-count" id="today-count"></div><div class="today-progress"><span id="today-progress"></span></div></div></div><div class="today-items" id="today-items"></div><button class="today-more" onclick="openSheet('today')">Se flere oppgaver ›</button></section><button class="week-card" onclick="openSheet('week')" aria-label="Åpne ukens oppgaver"><strong>📅 Denne uken ›</strong><small id="week-count"></small><div class="week-bar"><span id="week-progress"></span></div></button>
 
 
@@ -64,7 +68,7 @@
 <button class="hot" style="left:61%;top:58%;width:38%;height:7%" aria-label="Soverom" onclick="openSheet('bedrooms')"></button>
 
 <button class="hot downstairs-hot" style="left:63%;top:70.6%;width:34%;height:3.6%;z-index:6" aria-label="Øvrige rom nede" onclick="openSheet('hall')"></button>
-<button class="declutter-card" aria-label="Åpne ryddeprosjektet" onclick="openSheet('declutter')"><span class="declutter-title">✧ Declutter-prosjektet ›</span><span class="declutter-sub" id="declutter-count">0 av 0 oppgaver</span><span class="declutter-track"><span id="declutter-progress"></span></span></button>
+<button class="list-shortcut" onclick="openSheet('lists')" aria-label="Åpne lister">☑ Lister ›</button><button class="declutter-card" aria-label="Åpne ryddeprosjektet" onclick="openSheet('declutter')"><span class="declutter-title">✧ Declutter-prosjektet ›</span><span class="declutter-sub" id="declutter-count">0 av 0 oppgaver</span><span class="declutter-track"><span id="declutter-progress"></span></span></button>
 <button class="hot" style="left:0%;top:88%;width:21%;height:12%" aria-label="Oversikt" onclick="openSheet('overview')"></button>
 <button class="hot" style="left:21%;top:88%;width:19%;height:12%" aria-label="Uken" onclick="openSheet('week')"></button>
 <button class="hot" style="left:40%;top:88%;width:20%;height:12%" aria-label="Huset" onclick="openSheet('house')"></button>
@@ -107,7 +111,15 @@ if(!state.customWeek||!Array.isArray(state.customWeek))state.customWeek=[];
 // Månedlig rutine, separat fra Declutter.
 if(!state.routineDone||typeof state.routineDone!=='object')state.routineDone={};
 if(!state.customWeek||!Array.isArray(state.customWeek))state.customWeek=[];
+// Gjenopprett den kjente, forsvunne oppgaven én gang. Bevar eventuelle egne kopier.
+if(!state.recoveredShopping20261104){
+ const exists=[...state.customWeek,...state.tasks].some(t=>/handle maling/i.test(t.title||''));
+ if(!exists)state.customWeek.push({id:'recovered-handle-maling-20261104',title:'Handle maling osv.',kind:'week',room:null,cycle:'once',done:false,doneAt:null,week:'2026-11-02',day:2});
+ state.recoveredShopping20261104=true;
+}
 if(!state.dailyDone||typeof state.dailyDone!=='object')state.dailyDone={};
+if(!Array.isArray(state.lists))state.lists=[];
+state.lists.forEach(l=>{if(!Array.isArray(l.items))l.items=[]});
 function osloParts(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Oslo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());let p={};parts.forEach(x=>p[x.type]=x.value);return {y:+p.year,m:+p.month,d:+p.day}}
 function dayDate(){let p=osloParts();return new Date(Date.UTC(p.y,p.m-1,p.d))}
 function dateId(d){return d.toISOString().slice(0,10)}
@@ -130,9 +142,9 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function toast(s){let e=document.getElementById('toast');e.textContent=s;e.style.display='block';setTimeout(()=>e.style.display='none',3200)}
 function closeSheet(){document.getElementById('shade').classList.remove('show')}
 function isSheetOpen(){return document.getElementById('shade').classList.contains('show')}
-let current='overview',currentRoom='Vaskerom';
+let current='overview',currentRoom='Vaskerom',currentListId=null;
 function openRoom(r){currentRoom=r;openSheet('room')}
-function openSheet(s){current=s;let title={today:'☀️ I dag',week:'📅 Denne uken',house:'🏡 Hele huset',bedrooms:'🛏️ Soverom',hall:'🏠 Øvrige rom nede',living:'🛋️ Stue og kjøkken',declutter:'✨ Ryddeprosjektet',overview:'🏰 Min oversikt',progress:'💜 Fremdrift',sync:'💌 Samkjør med Elias',room:'🗝️ '+currentRoom}[s];document.getElementById('sheettitle').textContent=title;document.getElementById('shade').classList.add('show');render()}
+function openSheet(s){current=s;let title={today:'☀️ I dag',week:'📅 Denne uken',house:'🏡 Hele huset',bedrooms:'🛏️ Soverom',hall:'🏠 Øvrige rom nede',living:'🛋️ Stue og kjøkken',declutter:'✨ Ryddeprosjektet',overview:'🏰 Min oversikt',progress:'💜 Fremdrift',lists:'☑ Mine lister',list:'📝 '+(state.lists.find(l=>l.id===currentListId)?.name||'Liste'),sync:'💌 Samkjør med Elias',room:'🗝️ '+currentRoom}[s];document.getElementById('sheettitle').textContent=title;document.getElementById('shade').classList.add('show');render()}
 function nextDue(t){if(!t.done||!t.doneAt||!t.cycle||['once','asneeded'].includes(t.cycle))return null;
  const months={'3m':3,'6m':6,'12m':12}[t.cycle];if(!months)return null;
  const p=t.doneAt.split('-').map(Number);if(p.length!==3||p.some(x=>!x))return null;
@@ -148,24 +160,56 @@ function taskHtml(t){const due=needsRepeat(t),checked=taskDone(t);return `<div c
 function tasks(a){return a.length?a.map(taskHtml).join(''):'<p class="muted">Ingen oppgaver her ennå.</p>'}
 function meter(a){let n=a.filter(t=>t.done).length;return `<div class="meter"><div class="fill" style="width:${a.length?100*n/a.length:0}%"></div></div><p class="muted">${n} av ${a.length} oppgaver fullført</p>`}
 function routineMeter(a){let n=a.filter(r=>routineDone(r)).length;return `<div class="meter"><div class="fill" style="width:${a.length?100*n/a.length:0}%"></div></div><p class="muted">${n} av ${a.length} rutiner fullført denne perioden</p>`}
-function toggle(id,done){let t=state.tasks.find(x=>x.id===id)||state.customWeek.find(x=>x.id===id);if(t){t.done=done;t.doneAt=done?todayKey():null;save();renderHome();if(isSheetOpen())render()}}
+function toggle(id,done){let t=state.tasks.find(x=>x.id===id)||state.customWeek.find(x=>x.id===id);if(t){
+ const p=t.kind==='week'?repeatPeriod(t):null;
+ if(p!==null){if(!t.completedPeriods)t.completedPeriods={};if(done)t.completedPeriods[p]=todayKey();else delete t.completedPeriods[p]}
+ else{t.done=done;t.doneAt=done?todayKey():null}
+ save();renderHome();if(isSheetOpen())render()}}
 function removeTask(id){if(confirm('Vil du slette oppgaven?')){if(!state.deletedIds)state.deletedIds=[];if(!state.deletedIds.includes(id))state.deletedIds.push(id);state.tasks=state.tasks.filter(t=>t.id!==id);state.customWeek=state.customWeek.filter(t=>t.id!==id);save();renderHome();render()}}
-function addTask(kind,room){let el=document.getElementById('newtask'),title=el.value.trim();if(!title)return;let task={id:'t'+Date.now(),title,kind,room,cycle:'once',done:false,doneAt:null};if(kind==='week'){task.week=weekKey();const day=document.getElementById('newday');task.day=day&&day.value!==''?Number(day.value):null;state.customWeek.push(task)}else{const cycle=document.getElementById('newcycle');task.cycle=cycle?cycle.value:'once';state.tasks.push(task)}save();renderHome();render()}
+function addTask(kind,room){let el=document.getElementById('newtask'),title=el.value.trim();if(!title)return;let task={id:'t'+Date.now(),title,kind,room,cycle:'once',done:false,doneAt:null};if(kind==='week'){task.week=weekKey();const day=document.getElementById('newday');task.day=day&&day.value!==''?Number(day.value):null;task.repeat=document.getElementById('newrepeat')?.value||'once';task.completedPeriods={};state.customWeek.push(task)}else{const cycle=document.getElementById('newcycle');task.cycle=cycle?cycle.value:'once';state.tasks.push(task)}save();renderHome();render()}
 function addForm(kind,room){return `<h3>Legg til ryddeoppgave</h3><input class="field" id="newtask" placeholder="En liten, konkret oppgave"><label class="muted" for="newcycle">Hvor ofte?</label><select class="field" id="newcycle"><option value="once">Én gang</option><option value="asneeded">Ved behov</option><option value="3m">Hvert kvartal</option><option value="6m">To ganger i året</option><option value="12m">Én gang i året</option></select><div class="actions"><button class="btn" onclick="addTask('room','${room}')">Legg til</button></div>`}
 function roomList(arr){return arr.map(r=>{let a=state.tasks.filter(t=>t.kind==='room'&&t.room===r);return `<button class="room" onclick="openRoom('${r}')">${esc(r)} <b>${a.filter(t=>t.done).length}/${a.length} ›</b></button>`}).join('')}
-function currentCustom(){return state.customWeek.filter(t=>t.week===weekKey())}
+function weekDistance(a,b){return Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/604800000)}
+function repeatPeriod(t){
+ if(!t.repeat||t.repeat==='once')return null;
+ const start=t.week||weekKey(),now=weekKey();if(now<start)return null;
+ const weeks=weekDistance(start,now);
+ if(t.repeat==='weekly')return now;
+ if(t.repeat==='fortnight')return weeks%2===0?now:null;
+ const a=new Date(start+'T00:00:00Z'),b=new Date(now+'T00:00:00Z');
+ const months=(b.getUTCFullYear()-a.getUTCFullYear())*12+b.getUTCMonth()-a.getUTCMonth();
+ const every=t.repeat==='quarterly'?3:1;
+ return months>=0&&months%every===0?now.slice(0,7):null;
+}
+function customDone(t){const p=repeatPeriod(t);return p!==null?!!(t.completedPeriods&&t.completedPeriods[p]):!!t.done}
+function currentCustom(){return state.customWeek.filter(t=>{
+ if(t.repeat&&t.repeat!=='once')return repeatPeriod(t)!==null;
+ return t.week===weekKey()||(!t.done&&t.week&&t.week<weekKey());
+})}
+function repeatLabel(t){return ({once:'Én gang',weekly:'Ukentlig',fortnight:'Annenhver uke',monthly:'Månedlig',quarterly:'Hvert kvartal'})[t.repeat||'once']||'Én gang'}
 const weekdays=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
 function customDayLabel(t){return t.day===undefined||t.day===null?'Når som helst denne uken':weekdays[Number(t.day)]||'Når som helst denne uken'}
 function customToday(){return currentCustom().filter(t=>t.day!==undefined&&t.day!==null&&Number(t.day)===weekIndex())}
 function changeCustomDay(id,val){let t=state.customWeek.find(x=>x.id===id);if(!t)return;t.day=val===''?null:Number(val);save();renderHome();render()}
-function customTaskHtml(t){return `<div class="task ${t.done?'done':''}"><input type="checkbox" aria-label="Fullfør ${esc(t.title)}" ${t.done?'checked':''} onchange="toggle('${t.id}',this.checked)"><label><span>${esc(t.title)}</span><select aria-label="Velg dag for ${esc(t.title)}" class="field task-day" onchange="changeCustomDay('${t.id}',this.value)"><option value="" ${t.day==null?'selected':''}>Denne uken</option>${weekdays.map((d,i)=>`<option value="${i}" ${Number(t.day)===i&&t.day!=null?'selected':''}>${d}</option>`).join('')}</select></label><button class="del" aria-label="Slett" onclick="removeTask('${t.id}')">×</button></div>`}
-function customWeekForm(){return `<h3>Legg til oppgave</h3><input class="field" id="newtask" placeholder="Hva skal gjøres?"><label class="muted" for="newday">Når skal den gjøres?</label><select class="field" id="newday"><option value="">Når som helst denne uken</option>${weekdays.map((d,i)=>`<option value="${i}">${d}</option>`).join('')}</select><div class="actions"><button class="btn" onclick="addTask('week',null)">Legg til</button></div>`}
+function customTaskHtml(t){const done=customDone(t);return `<div class="task ${done?'done':''}"><input type="checkbox" aria-label="Fullfør ${esc(t.title)}" ${done?'checked':''} onchange="toggle('${t.id}',this.checked)"><label><span>${esc(t.title)}</span><small class="schedule">${esc(repeatLabel(t))}</small><select aria-label="Velg dag for ${esc(t.title)}" class="field task-day" onchange="changeCustomDay('${t.id}',this.value)"><option value="" ${t.day==null?'selected':''}>Denne uken</option>${weekdays.map((d,i)=>`<option value="${i}" ${Number(t.day)===i&&t.day!=null?'selected':''}>${d}</option>`).join('')}</select></label><button class="del" aria-label="Slett" onclick="removeTask('${t.id}')">×</button></div>`}
+function customWeekForm(){return `<h3>Legg til oppgave</h3><input class="field" id="newtask" placeholder="Hva skal gjøres?"><label class="muted" for="newday">Når skal den gjøres?</label><select class="field" id="newday"><option value="">Når som helst denne uken</option>${weekdays.map((d,i)=>`<option value="${i}">${d}</option>`).join('')}</select><label class="muted" for="newrepeat">Gjenta</label><select class="field" id="newrepeat"><option value="once">Én gang</option><option value="weekly">Ukentlig</option><option value="fortnight">Annenhver uke</option><option value="monthly">Månedlig</option><option value="quarterly">Hvert kvartal</option></select><div class="actions"><button class="btn" onclick="addTask('week',null)">Legg til</button></div>`}
+function uid(){return 'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function openList(id){currentListId=id;openSheet('list')}
+function createList(){let name=prompt('Hva skal listen hete?');if(!name||!name.trim())return;let l={id:uid(),name:name.trim(),items:[]};state.lists.push(l);save();openList(l.id)}
+function currentList(){return state.lists.find(l=>l.id===currentListId)}
+function addListItem(){let l=currentList(),input=document.getElementById('list-new-item');if(!l||!input)return;let title=input.value.trim();if(!title)return;l.items.push({id:uid(),title,done:false});save();render();let next=document.getElementById('list-new-item');if(next)next.focus()}
+function toggleListItem(id,checked){let l=currentList(),item=l?.items.find(x=>x.id===id);if(!item)return;item.done=checked;save();render()}
+function deleteListItem(id){let l=currentList();if(!l)return;l.items=l.items.filter(x=>x.id!==id);save();render()}
+function clearListChecks(){let l=currentList();if(!l)return;l.items.forEach(x=>x.done=false);save();render();toast('Alle hakene er fjernet')}
+function deleteList(){let l=currentList();if(!l||!confirm('Slette hele listen «'+l.name+'»?'))return;state.lists=state.lists.filter(x=>x.id!==l.id);currentListId=null;save();openSheet('lists')}
+function listOverview(){return `<p class="muted">Listene lagres på denne enheten og blir liggende til du sletter dem.</p><button class="btn" onclick="createList()">+ Lag ny liste</button>`+state.lists.map(l=>`<button class="room" onclick="openList('${l.id}')"><span>${esc(l.name)}</span><b>${l.items.filter(i=>i.done).length}/${l.items.length} ›</b></button>`).join('')}
+function listDetail(){let l=currentList();if(!l)return `<p>Fant ikke listen.</p><button class="btn secondary" onclick="openSheet('lists')">Tilbake</button>`;return `<button class="btn secondary" onclick="openSheet('lists')">‹ Alle lister</button><p class="muted">${l.items.filter(i=>i.done).length} av ${l.items.length} krysset av</p>`+l.items.map(i=>`<div class="list-entry ${i.done?'checked':''}"><input type="checkbox" ${i.done?'checked':''} onchange="toggleListItem('${i.id}',this.checked)"><span class="item-label">${esc(i.title)}</span><button aria-label="Fjern ${esc(i.title)}" onclick="deleteListItem('${i.id}')">×</button></div>`).join('')+`<input class="field list-input" id="list-new-item" placeholder="Skriv noe og trykk Enter …" onkeydown="if(event.key==='Enter'){event.preventDefault();addListItem()}"><div class="list-hint">Trykk Enter for å legge til neste punkt. Hvert punkt lagres med en gang.</div><div class="actions"><button class="btn secondary" onclick="clearListChecks()">↺ Fjern alle haker</button><button class="btn secondary" onclick="deleteList()">Slett listen</button></div>`}
 
 function todayRoutines(){return activeRoutines().filter(r=>routineApplicableToday(r))}
 function renderHome(){
  let date=document.getElementById('today-date');if(!date)return;
  date.textContent=todayLabel();
- let a=todayRoutines(),visible=a.map(r=>({title:r.title,done:routineDone(r),id:r.id,routine:true})).concat(customToday().map(t=>({...t,routine:false}))).slice(0,3),done=visible.filter(t=>t.done).length;
+ let a=todayRoutines(),visible=a.map(r=>({title:r.title,done:routineDone(r),id:r.id,routine:true})).concat(customToday().map(t=>({...t,done:customDone(t),routine:false}))).slice(0,3),done=visible.filter(t=>t.done).length;
  document.getElementById('today-count').textContent=done+' av '+visible.length;
  document.getElementById('today-progress').style.width=(visible.length?100*done/visible.length:0)+'%';
  document.getElementById('today-items').innerHTML=visible.map(t=>`<label class="today-item ${t.done?'done':''}"><input type="checkbox" ${t.done?'checked':''} onchange="${t.routine?'toggleRoutine':'toggle'}('${t.id}',this.checked)"><span title="${esc(t.title)}">${esc(t.title)}</span></label>`).join('')||'<small>Alt er gjort for i dag ✨</small>';
@@ -177,6 +221,8 @@ function renderHome(){
  document.getElementById('week-progress').style.width=(w.length?100*n/w.length:0)+'%';
 }
 function render(){let r=state.tasks.filter(t=>t.kind==='room'),a=activeRoutines(),custom=currentCustom(),body='';switch(current){
+ case 'lists':body=listOverview();break;
+ case 'list':body=listDetail();break;
  case 'today':body='<p class="muted">'+esc(todayLabel())+'</p><p class="muted">Dagens rutiner og oppgaver du har lagt til for denne dagen.</p>'+ (todayRoutines().length?todayRoutines().map(routineHtml).join(''):'')+customToday().map(customTaskHtml).join('')+(!todayRoutines().length&&!customToday().length?'<p class="muted">Ingen oppgaver planlagt i dag ✨</p>':'')+'<button class="btn secondary" onclick="openSheet(&quot;week&quot;)">Se hele uken</button>';break;
  case 'week':body='<p class="muted">Faste rutiner kommer tilbake automatisk. Helg betyr fredag, lørdag eller søndag.</p>'+routineMeter(a)+a.map(routineHtml).join('')+'<h3>Andre oppgaver denne uken</h3>'+(custom.length?custom.map(customTaskHtml).join(''):'<p class="muted">Ingen ekstra oppgaver ennå.</p>')+customWeekForm();break;
  case 'house':body='<p class="muted">Velg rommet du vil rydde når du har tid.</p>'+roomList(rooms);break;
@@ -189,15 +235,15 @@ function render(){let r=state.tasks.filter(t=>t.kind==='room'),a=activeRoutines(
  case 'progress':body='<h3>Faste rutiner denne uken</h3>'+routineMeter(a)+'<h3>Større ryddeprosjekt – totalt</h3>'+meter(r)+'<p class="muted">Ryddeoppgavene nullstilles ikke når en ny uke begynner.</p>'+roomList(rooms);break;
  case 'sync':body='<p>Kopier status til samtalen vår når du ønsker å planlegge videre. Vi beholder rutinene og ryddefremdriften.</p><button class="btn" onclick="exportElias()">📋 Kopier status til Elias</button><h3>Importer oppgaver fra Elias</h3><p class="muted">Lim inn JSON med romoppgaver. Ta en sikkerhetskopi først.</p><textarea class="field fieldarea" id="import" placeholder="Lim inn JSON her"></textarea><div class="actions"><button class="btn secondary" onclick="preview()">Forhåndsvis</button><button class="btn" onclick="apply()">Godkjenn</button></div><p id="importstatus" class="muted"></p><h3>Sikkerhetskopi</h3><p class="muted">Data lagres lokalt på denne enheten, ikke på GitHub. Ta sikkerhetskopi jevnlig.</p><div class="actions"><button class="btn secondary" onclick="backup()">Lagre kopi</button><button class="btn secondary" onclick="document.getElementById(&quot;file&quot;).click()">Gjenopprett</button></div><input type="file" id="file" accept=".json,application/json" hidden onchange="restore(event)">';break;
  }document.getElementById('sheetbody').innerHTML=body}
-function exportElias(){let txt='Elias, her er status fra Hjemme med Elias. Faste rutiner er innebygd i appen. Hjelp meg med ryddeprosjektet, men behold oppgaver og ID-er. Data:\n'+JSON.stringify({app:'Hjemme med Elias',version:2,week:weekKey(),routineDone:state.routineDone,routines:activeRoutines(),tasks:state.tasks,customWeek:state.customWeek},null,2);navigator.clipboard.writeText(txt).then(()=>toast('Kopiert! Lim inn i ChatGPT.')).catch(()=>prompt('Kopier denne teksten:',txt))}
+function exportElias(){let txt='Elias, her er status fra Hjemme med Elias. Faste rutiner er innebygd i appen. Hjelp meg med ryddeprosjektet, men behold oppgaver og ID-er. Data:\n'+JSON.stringify({app:'Hjemme med Elias',version:2,week:weekKey(),routineDone:state.routineDone,routines:activeRoutines(),tasks:state.tasks,customWeek:state.customWeek,lists:state.lists},null,2);navigator.clipboard.writeText(txt).then(()=>toast('Kopiert! Lim inn i ChatGPT.')).catch(()=>prompt('Kopier denne teksten:',txt))}
 let pending=null;
 function parse(){let raw=document.getElementById('import').value.trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');let o=JSON.parse(raw);if(!o||!Array.isArray(o.tasks)||o.tasks.length>2000)throw Error('Mangler oppgaveliste');let ids=new Set();o.tasks.forEach(t=>{if(typeof t.id!=='string'||!t.id||ids.has(t.id)||typeof t.title!=='string'||!t.title.trim()||t.kind!=='room'||typeof t.done!=='boolean'||!rooms.includes(t.room))throw Error('Ugyldig romoppgave eller duplikat');ids.add(t.id)});return o.tasks.map(t=>({id:t.id,title:t.title,kind:'room',room:t.room,cycle:t.cycle||'once',done:t.done,doneAt:t.doneAt||null}))}
 function preview(){try{pending=parse();let old=new Map(state.tasks.map(t=>[t.id,t]));let added=pending.filter(t=>!old.has(t.id)).length,changed=pending.filter(t=>old.has(t.id)&&JSON.stringify(t)!==JSON.stringify(old.get(t.id))).length,removed=state.tasks.filter(t=>!pending.some(x=>x.id===t.id)).length;document.getElementById('importstatus').textContent=`${added} nye, ${changed} endret, ${removed} slettet. Rutiner beholdes.`}catch(e){pending=null;document.getElementById('importstatus').textContent='Kunne ikke lese oppdateringen: '+e.message}}
 function apply(){preview();if(pending&&confirm('Erstatte romoppgavene? Faste rutiner beholdes.')){state.tasks=pending;save();toast('Importert!');renderHome();render()}}
 function backup(){let b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='hjemme-med-elias-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
-async function restore(e){try{let o=JSON.parse(await e.target.files[0].text());if(!o||!Array.isArray(o.tasks))throw Error('Ugyldig fil');if(confirm('Erstatte eksisterende oppgaver og status?')){state=o;if(!state.routineDone)state.routineDone={};if(!state.customWeek)state.customWeek=[];save();renderHome();render();toast('Gjenopprettet')}}catch(err){toast('Kunne ikke lese filen')}}
+async function restore(e){try{let o=JSON.parse(await e.target.files[0].text());if(!o||!Array.isArray(o.tasks))throw Error('Ugyldig fil');if(confirm('Erstatte eksisterende oppgaver og status?')){state=o;if(!state.routineDone)state.routineDone={};if(!state.customWeek)state.customWeek=[];if(!Array.isArray(state.lists))state.lists=[];save();renderHome();render();toast('Gjenopprettet')}}catch(err){toast('Kunne ikke lese filen')}}
 function refresh(){renderHome();if(isSheetOpen())render()}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
-renderHome();setInterval(refresh,60000);
+save();renderHome();setInterval(refresh,60000);
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script></body></html>
